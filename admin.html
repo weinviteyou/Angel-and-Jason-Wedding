@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Angel &amp; Jason — RSVP Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --wine-950:#2A0A15;
+  --wine-900:#3C0F1F;
+  --burgundy-800:#57132C;
+  --burgundy-700:#711C3B;
+  --burgundy-600:#8A2748;
+  --gold-700:#9C7A3C;
+  --gold-600:#B4923F;
+  --gold-500:#C9A356;
+  --gold-300:#E2CA92;
+  --gold-100:#F2E6C4;
+  --ivory-50:#FBF6EE;
+  --ivory-100:#F6EDE0;
+  --cream-100:#F1E4D0;
+  --ink-800:#33232A;
+  --ink-600:#5B454B;
+  --ink-400:#8A7176;
+  --line-gold: rgba(196,157,80,.35);
+  --ok-600:#3F7A4E;
+  --no-600:#A23A3A;
+  --shadow-card: 0 12px 30px -14px rgba(58,15,31,.28);
+  --font-display:'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-body:'Jost', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0; min-height:100vh; background:var(--ivory-50); color:var(--ink-800);
+  font-family:var(--font-body);
+}
+h1,h2,h3{ font-family:var(--font-display); font-weight:500; color:var(--wine-900); margin:0; }
+.eyebrow{ font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; color:var(--gold-700); }
+
+/* ---------- Gate ---------- */
+#gate{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  background: radial-gradient(circle at 30% 20%, var(--burgundy-700), var(--wine-950) 70%);
+}
+.gate-card{
+  width:100%; max-width:380px; background:var(--ivory-50); border-radius:18px; padding:40px 32px;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.5); text-align:center;
+}
+.gate-card h1{ font-size:1.7rem; margin-bottom:6px; }
+.gate-card p{ color:var(--ink-600); font-size:.9rem; margin:6px 0 24px; }
+.gate-card input{
+  width:100%; padding:12px 14px; border:1px solid var(--line-gold); border-radius:10px;
+  font-family:inherit; font-size:.95rem; background:#fff; color:var(--ink-800); margin-bottom:14px;
+}
+.gate-card input:focus{ outline:2px solid var(--gold-500); outline-offset:1px; }
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%;
+  padding:12px 18px; border-radius:10px; border:1px solid var(--gold-500); background:var(--gold-500);
+  color:var(--wine-950); font-weight:500; font-size:.9rem; cursor:pointer; transition:transform .2s ease, background .2s ease;
+}
+.btn:hover{ background:var(--gold-600); }
+.btn:active{ transform:scale(.98); }
+.btn-ghost{ background:transparent; color:var(--wine-900); border-color:var(--line-gold); }
+.btn-ghost:hover{ background:var(--cream-100); }
+#gateMsg{ min-height:1.2em; font-size:.82rem; color:var(--no-600); margin-top:10px; }
+
+/* ---------- Dashboard ---------- */
+#dashboard{ display:none; max-width:1180px; margin:0 auto; padding:32px 20px 80px; }
+#dashboard.show{ display:block; }
+.dash-head{
+  display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:12px;
+  padding-bottom:20px; border-bottom:1px solid var(--line-gold); margin-bottom:28px;
+}
+.dash-head h1{ font-size:1.9rem; }
+.dash-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.dash-actions .btn, .dash-actions .btn-ghost{ width:auto; padding:10px 16px; font-size:.82rem; }
+
+.stat-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;
+}
+.stat-card{
+  background:#fff; border:1px solid var(--line-gold); border-radius:14px; padding:18px 20px;
+  box-shadow:var(--shadow-card);
+}
+.stat-card .num{ font-family:var(--font-display); font-size:2.1rem; color:var(--wine-900); line-height:1; }
+.stat-card .lbl{ font-size:.78rem; color:var(--ink-600); margin-top:6px; letter-spacing:.02em; }
+
+.section-title{
+  display:flex; align-items:center; justify-content:space-between; margin:36px 0 14px;
+}
+.section-title h2{ font-size:1.35rem; }
+.pill-count{
+  font-size:.75rem; background:var(--cream-100); color:var(--wine-900); border-radius:999px;
+  padding:3px 12px; letter-spacing:.02em;
+}
+
+.table-wrap{
+  overflow-x:auto; background:#fff; border:1px solid var(--line-gold); border-radius:14px; box-shadow:var(--shadow-card);
+}
+table{ border-collapse:collapse; width:100%; font-size:.85rem; min-width:720px; }
+thead th{
+  text-align:left; padding:12px 14px; background:var(--wine-950); color:var(--gold-100);
+  font-weight:500; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+}
+tbody td{ padding:11px 14px; border-bottom:1px solid var(--cream-100); vertical-align:top; }
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover{ background:var(--ivory-100); }
+.badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:500; }
+.badge-yes{ background:rgba(63,122,78,.12); color:var(--ok-600); }
+.badge-no{ background:rgba(162,58,58,.12); color:var(--no-600); }
+.muted{ color:var(--ink-400); }
+.empty-row td{ text-align:center; padding:28px; color:var(--ink-400); font-style:italic; }
+
+#loadingNote, #errorNote{ font-size:.85rem; margin:10px 0; }
+#errorNote{ color:var(--no-600); display:none; }
+.search-row{ display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.search-row input{
+  flex:1; min-width:200px; padding:9px 12px; border:1px solid var(--line-gold); border-radius:8px;
+  font-family:inherit; font-size:.85rem;
+}
+footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; margin-top:50px; }
+
+@media (max-width:900px){ .stat-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px){ .stat-grid{ grid-template-columns:1fr 1fr; } .dash-head{ flex-direction:column; align-items:flex-start; } }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card">
+    <span class="eyebrow">Angel &amp; Jason</span>
+    <h1>RSVP Dashboard</h1>
+    <p>Enter the admin key you set in Google Apps Script (Script Properties &rarr; ADMIN_KEY) to view responses.</p>
+    <input type="password" id="adminKeyInput" placeholder="Admin key" autocomplete="off" />
+    <button type="button" class="btn" id="unlockBtn">Unlock Dashboard</button>
+    <p id="gateMsg"></p>
+  </div>
+</div>
+
+<div id="dashboard">
+  <div class="dash-head">
+    <div>
+      <span class="eyebrow">Angel &amp; Jason &middot; December 30, 2026</span>
+      <h1>RSVP Dashboard</h1>
+    </div>
+    <div class="dash-actions">
+      <button type="button" class="btn-ghost btn" id="refreshBtn">Refresh</button>
+      <button type="button" class="btn-ghost btn" id="exportRsvpBtn">Export RSVPs (CSV)</button>
+      <button type="button" class="btn-ghost btn" id="exportGbBtn">Export Guestbook (CSV)</button>
+      <button type="button" class="btn-ghost btn" id="lockBtn">Lock</button>
+    </div>
+  </div>
+
+  <p id="loadingNote" class="muted">Loading responses&hellip;</p>
+  <p id="errorNote"></p>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num" id="statResponses">0</div><div class="lbl">Total Responses</div></div>
+    <div class="stat-card"><div class="num" id="statAttending">0</div><div class="lbl">Parties Attending</div></div>
+    <div class="stat-card"><div class="num" id="statGuests">0</div><div class="lbl">Total Guests Coming</div></div>
+    <div class="stat-card"><div class="num" id="statDeclined">0</div><div class="lbl">Declined</div></div>
+  </div>
+
+  <div class="section-title">
+    <h2>Meal Preferences</h2>
+    <span class="pill-count" id="mealCount">0 selections</span>
+  </div>
+  <div class="table-wrap">
+    <table id="mealTable">
+      <thead><tr><th>Meal</th><th>Count</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    <h2>RSVP Responses</h2>
+    <span class="pill-count" id="rsvpCount">0</span>
+  </div>
+  <div class="search-row">
+    <input type="text" id="rsvpSearch" placeholder="Search by name, meal, or message&hellip;" />
+  </div>
+  <div class="table-wrap">
+    <table id="rsvpTable">
+      <thead>
+        <tr>
+          <th>Name</th><th>Status</th><th>Guests</th><th>Guest Names</th>
+          <th>Meal</th><th>Dietary / Notes</th><th>Message</th><th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    <h2>Guestbook</h2>
+    <span class="pill-count" id="gbCount">0</span>
+  </div>
+  <div class="table-wrap">
+    <table id="gbTable">
+      <thead><tr><th>Name</th><th>Type</th><th>Message</th><th>Submitted</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <footer class="admin-footer">Private dashboard &middot; not linked from the public site &middot; keep this URL to yourself</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ------------------------------------------------------------
+     BACKEND CONFIG — must match the Web app URL used in index.html.
+     ------------------------------------------------------------ */
+  var CONFIG = {
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzVt6B3d4N8BSnXK8luIZzFGCcY8VaAxdtZZRU-6dQSPNz2yQDTNY0mZNvwNENvE1958g/exec'
+  };
+
+  var gate = document.getElementById('gate');
+  var dashboard = document.getElementById('dashboard');
+  var adminKeyInput = document.getElementById('adminKeyInput');
+  var unlockBtn = document.getElementById('unlockBtn');
+  var gateMsg = document.getElementById('gateMsg');
+  var loadingNote = document.getElementById('loadingNote');
+  var errorNote = document.getElementById('errorNote');
+
+  var currentData = { rsvps: [], guestbook: [] };
+
+  function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmtDate(ts){
+    if(!ts) return '';
+    try{
+      var d = new Date(ts);
+      return d.toLocaleString(undefined, {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+  function nl2br(s){ return escapeHtml(s).replace(/\n/g, '<br>'); }
+
+  function fetchAll(key){
+    var url = CONFIG.WEB_APP_URL + '?action=all&key=' + encodeURIComponent(key);
+    return fetch(url).then(function(res){ return res.json(); });
+  }
+
+  function unlock(){
+    var key = adminKeyInput.value.trim();
+    if(CONFIG.WEB_APP_URL.indexOf('PASTE_YOUR') !== -1){
+      gateMsg.textContent = 'Set CONFIG.WEB_APP_URL in admin.html first (see README.md).';
+      return;
+    }
+    if(!key){ gateMsg.textContent = 'Enter the admin key.'; return; }
+
+    unlockBtn.disabled = true;
+    gateMsg.textContent = 'Checking…';
+
+    fetchAll(key).then(function(data){
+      unlockBtn.disabled = false;
+      if(data && data.ok){
+        sessionStorage.setItem('weddingAdminKey', key);
+        gateMsg.textContent = '';
+        gate.style.display = 'none';
+        dashboard.classList.add('show');
+        currentData = data;
+        renderDashboard();
+      } else {
+        gateMsg.textContent = 'Incorrect key, or the backend is unreachable. Double-check ADMIN_KEY in Script Properties.';
+      }
+    }).catch(function(){
+      unlockBtn.disabled = false;
+      gateMsg.textContent = "Couldn't reach the backend — check CONFIG.WEB_APP_URL and your connection.";
+    });
+  }
+
+  unlockBtn.addEventListener('click', unlock);
+  adminKeyInput.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ unlock(); } });
+
+  document.getElementById('lockBtn').addEventListener('click', function(){
+    sessionStorage.removeItem('weddingAdminKey');
+    dashboard.classList.remove('show');
+    gate.style.display = 'flex';
+    adminKeyInput.value = '';
+    adminKeyInput.focus();
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', function(){
+    var key = sessionStorage.getItem('weddingAdminKey');
+    if(!key) return;
+    loadingNote.style.display = '';
+    fetchAll(key).then(function(data){
+      loadingNote.style.display = 'none';
+      if(data && data.ok){ currentData = data; renderDashboard(); }
+    });
+  });
+
+  /* ------------------------------------------------------------
+     RENDER
+     ------------------------------------------------------------ */
+  function renderDashboard(){
+    loadingNote.style.display = 'none';
+    errorNote.style.display = 'none';
+
+    var rsvps = currentData.rsvps || [];
+    var gb = currentData.guestbook || [];
+
+    var attending = rsvps.filter(function(r){ return r.Attending === 'yes'; });
+    var declined = rsvps.filter(function(r){ return r.Attending === 'no'; });
+    var totalGuests = attending.reduce(function(sum, r){ return sum + (parseInt(r.Guests, 10) || 1); }, 0);
+
+    document.getElementById('statResponses').textContent = rsvps.length;
+    document.getElementById('statAttending').textContent = attending.length;
+    document.getElementById('statGuests').textContent = totalGuests;
+    document.getElementById('statDeclined').textContent = declined.length;
+
+    var meals = {};
+    attending.forEach(function(r){
+      var m = (r.Meal || '').trim();
+      if(!m) return;
+      meals[m] = (meals[m] || 0) + 1;
+    });
+    var mealRows = Object.keys(meals).sort(function(a,b){ return meals[b]-meals[a]; });
+    document.getElementById('mealCount').textContent = mealRows.length + ' selections';
+    var mealBody = document.querySelector('#mealTable tbody');
+    mealBody.innerHTML = mealRows.length
+      ? mealRows.map(function(m){ return '<tr><td>' + escapeHtml(m) + '</td><td>' + meals[m] + '</td></tr>'; }).join('')
+      : '<tr class="empty-row"><td colspan="2">No meal selections yet.</td></tr>';
+
+    document.getElementById('rsvpCount').textContent = rsvps.length;
+    renderRsvpTable(rsvps);
+
+    document.getElementById('gbCount').textContent = gb.length;
+    var gbBody = document.querySelector('#gbTable tbody');
+    var gbSorted = gb.slice().sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+    gbBody.innerHTML = gbSorted.length
+      ? gbSorted.map(function(e){
+          return '<tr>' +
+            '<td>' + escapeHtml(e.Name) + '</td>' +
+            '<td>' + escapeHtml(e.Kind) + '</td>' +
+            '<td>' + nl2br(e.Message) + '</td>' +
+            '<td class="muted">' + fmtDate(e.Timestamp) + '</td>' +
+          '</tr>';
+        }).join('')
+      : '<tr class="empty-row"><td colspan="4">No guestbook entries yet.</td></tr>';
+  }
+
+  function renderRsvpTable(rsvps){
+    var body = document.querySelector('#rsvpTable tbody');
+    var sorted = rsvps.slice().sort(function(a,b){ return (b.Timestamp||0) - (a.Timestamp||0); });
+    if(!sorted.length){
+      body.innerHTML = '<tr class="empty-row"><td colspan="8">No RSVPs yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = sorted.map(function(r){
+      var badge = r.Attending === 'yes'
+        ? '<span class="badge badge-yes">Attending</span>'
+        : '<span class="badge badge-no">Declined</span>';
+      return '<tr>' +
+        '<td>' + escapeHtml(r.Name) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td>' + escapeHtml(r.Guests) + '</td>' +
+        '<td>' + nl2br(r.GuestNames) + '</td>' +
+        '<td>' + escapeHtml(r.Meal) + '</td>' +
+        '<td>' + nl2br(r.Dietary) + '</td>' +
+        '<td>' + nl2br(r.Message) + '</td>' +
+        '<td class="muted">' + fmtDate(r.Timestamp) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('rsvpSearch').addEventListener('input', function(){
+    var q = this.value.trim().toLowerCase();
+    var rsvps = (currentData.rsvps || []).filter(function(r){
+      if(!q) return true;
+      return [r.Name, r.Meal, r.Message, r.Dietary, r.GuestNames].some(function(f){
+        return String(f || '').toLowerCase().indexOf(q) !== -1;
+      });
+    });
+    renderRsvpTable(rsvps);
+  });
+
+  /* ------------------------------------------------------------
+     CSV EXPORT
+     ------------------------------------------------------------ */
+  function toCsv(headers, rows){
+    var esc = function(v){
+      var s = String(v === undefined || v === null ? '' : v);
+      if(/[",\n]/.test(s)){ s = '"' + s.replace(/"/g, '""') + '"'; }
+      return s;
+    };
+    var lines = [headers.map(esc).join(',')];
+    rows.forEach(function(row){ lines.push(row.map(esc).join(',')); });
+    return lines.join('\r\n');
+  }
+
+  function downloadCsv(filename, csv){
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  document.getElementById('exportRsvpBtn').addEventListener('click', function(){
+    var headers = ['Name','Attending','Guests','GuestNames','Meal','Dietary','Message','Submitted'];
+    var rows = (currentData.rsvps || []).map(function(r){
+      return [r.Name, r.Attending, r.Guests, r.GuestNames, r.Meal, r.Dietary, r.Message, fmtDate(r.Timestamp)];
+    });
+    downloadCsv('angel-jason-rsvps.csv', toCsv(headers, rows));
+  });
+
+  document.getElementById('exportGbBtn').addEventListener('click', function(){
+    var headers = ['Name','Kind','Message','Submitted'];
+    var rows = (currentData.guestbook || []).map(function(e){
+      return [e.Name, e.Kind, e.Message, fmtDate(e.Timestamp)];
+    });
+    downloadCsv('angel-jason-guestbook.csv', toCsv(headers, rows));
+  });
+
+  /* ------------------------------------------------------------
+     INIT — auto-unlock if this browser tab already has a key
+     ------------------------------------------------------------ */
+  var savedKey = sessionStorage.getItem('weddingAdminKey');
+  if(savedKey){
+    adminKeyInput.value = savedKey;
+    unlock();
+  }
+
+})();
+</script>
+</body>
+</html>
