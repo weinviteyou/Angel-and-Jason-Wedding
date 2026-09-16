@@ -727,25 +727,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
           </div>
         </div>
 
-        <div id="attendingFields" class="hidden-block">
-          <div class="field">
-            <label for="rsvpGuests">Number of Guests (including you)</label>
-            <select id="rsvpGuests" name="rsvpGuests">
-              <option value="1">Just me</option>
-              <option value="2">2 guests</option>
-              <option value="3">3 guests</option>
-              <option value="4">4 guests</option>
-              <option value="5">5 guests</option>
-              <option value="6">6 guests</option>
-            </select>
-          </div>
-
-          <div class="field hidden-block" id="extraGuestsField">
-            <label for="rsvpGuestNames">Names of Additional Guests</label>
-            <textarea id="rsvpGuestNames" name="rsvpGuestNames" placeholder="One name per line"></textarea>
-          </div>
-        </div>
-
         <div class="field">
           <label for="rsvpMessage">A Message For Angel &amp; Jason <span style="opacity:.6">(optional)</span></label>
           <textarea id="rsvpMessage" name="rsvpMessage" placeholder="Share your excitement, well wishes, or anything you'd like the couple to know"></textarea>
@@ -1243,17 +1224,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
       attending = opt.getAttribute('data-value');
       attendOpts.forEach(function(o){ o.classList.remove('active'); o.setAttribute('aria-checked','false'); });
       opt.classList.add('active'); opt.setAttribute('aria-checked','true');
-      var fields = document.getElementById('attendingFields');
-      if(attending === 'yes'){ fields.classList.add('show'); } else { fields.classList.remove('show'); }
     }
     opt.addEventListener('click', choose);
     opt.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); choose(); } });
-  });
-
-  var guestsSelect = document.getElementById('rsvpGuests');
-  guestsSelect.addEventListener('change', function(){
-    var extra = document.getElementById('extraGuestsField');
-    if(parseInt(guestsSelect.value,10) > 1){ extra.classList.add('show'); } else { extra.classList.remove('show'); }
   });
 
   var confirmKind = 'message';
@@ -1304,8 +1277,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
       id: uid(),
       name: name,
       attending: attending,
-      guests: attending === 'yes' ? (document.getElementById('rsvpGuests').value || '1') : '0',
-      guestNames: attending === 'yes' ? document.getElementById('rsvpGuestNames').value.trim() : '',
       message: document.getElementById('rsvpMessage').value.trim(),
       ts: Date.now()
     };
