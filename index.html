@@ -728,39 +728,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
         </div>
 
         <div id="attendingFields" class="hidden-block">
-          <div class="row2">
-            <div class="field">
-              <label for="rsvpGuests">Number of Guests (including you)</label>
-              <select id="rsvpGuests" name="rsvpGuests">
-                <option value="1">Just me</option>
-                <option value="2">2 guests</option>
-                <option value="3">3 guests</option>
-                <option value="4">4 guests</option>
-                <option value="5">5 guests</option>
-                <option value="6">6 guests</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="rsvpMeal">Meal Preference</label>
-              <select id="rsvpMeal" name="rsvpMeal">
-                <option value="">Select a meal</option>
-                <option>Herb-Roasted Chicken</option>
-                <option>Braised Beef Short Rib</option>
-                <option>Pan-Seared Fish</option>
-                <option>Garden Vegetarian</option>
-                <option>Children's Plate</option>
-              </select>
-            </div>
+          <div class="field">
+            <label for="rsvpGuests">Number of Guests (including you)</label>
+            <select id="rsvpGuests" name="rsvpGuests">
+              <option value="1">Just me</option>
+              <option value="2">2 guests</option>
+              <option value="3">3 guests</option>
+              <option value="4">4 guests</option>
+              <option value="5">5 guests</option>
+              <option value="6">6 guests</option>
+            </select>
           </div>
 
           <div class="field hidden-block" id="extraGuestsField">
             <label for="rsvpGuestNames">Names of Additional Guests</label>
             <textarea id="rsvpGuestNames" name="rsvpGuestNames" placeholder="One name per line"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="rsvpDietary">Dietary Restrictions or Special Requests</label>
-            <textarea id="rsvpDietary" name="rsvpDietary" placeholder="Allergies, accessibility needs, meal notes for your party, etc."></textarea>
           </div>
         </div>
 
@@ -1324,8 +1306,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
       attending: attending,
       guests: attending === 'yes' ? (document.getElementById('rsvpGuests').value || '1') : '0',
       guestNames: attending === 'yes' ? document.getElementById('rsvpGuestNames').value.trim() : '',
-      meal: attending === 'yes' ? document.getElementById('rsvpMeal').value : '',
-      dietary: attending === 'yes' ? document.getElementById('rsvpDietary').value.trim() : '',
       message: document.getElementById('rsvpMessage').value.trim(),
       ts: Date.now()
     };
