@@ -499,9 +499,9 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   }
 
   document.getElementById('exportRsvpBtn').addEventListener('click', function(){
-    var headers = ['Name','Attending','Guests','GuestNames','Meal','Dietary','Message','Submitted'];
+    var headers = ['Name','Attending','Message','Submitted'];
     var rows = (currentData.rsvps || []).map(function(r){
-      return [r.Name, r.Attending, r.Guests, r.GuestNames, r.Meal, r.Dietary, r.Message, fmtDate(r.Timestamp)];
+      return [r.Name, r.Attending, r.Message, fmtDate(r.Timestamp)];
     });
     downloadCsv('angel-jason-rsvps.csv', toCsv(headers, rows));
   });
