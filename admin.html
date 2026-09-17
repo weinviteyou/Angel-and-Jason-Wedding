@@ -130,7 +130,43 @@ tbody tr:hover{ background:var(--ivory-100); }
 footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; margin-top:50px; }
 
 @media (max-width:900px){ .stat-grid{ grid-template-columns:repeat(2,1fr); } }
-@media (max-width:520px){ .stat-grid{ grid-template-columns:1fr 1fr; } .dash-head{ flex-direction:column; align-items:flex-start; } }
+@media (max-width:640px){
+  #dashboard{ padding:20px 12px 60px; }
+  .dash-head{ flex-direction:column; align-items:flex-start; gap:14px; }
+  .dash-head h1{ font-size:1.5rem; }
+  .dash-actions{ width:100%; }
+  .dash-actions .btn, .dash-actions .btn-ghost{ flex:1 1 calc(50% - 5px); }
+  .stat-grid{ grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px; }
+  .stat-card{ padding:14px 14px; }
+  .stat-card .num{ font-size:1.6rem; }
+  .section-title{ margin:26px 0 10px; }
+  .section-title h2{ font-size:1.1rem; }
+  .search-row input{ font-size:16px; }
+
+  table, thead, tbody, th, tr, td{ display:block; }
+  .table-wrap{ overflow-x:visible; box-shadow:none; border:none; background:transparent; }
+  table{ min-width:0; }
+  thead{ display:none; }
+  tbody tr{
+    background:#fff; border:1px solid var(--line-gold); border-radius:12px;
+    box-shadow:var(--shadow-card); margin-bottom:12px; padding:6px 0;
+  }
+  tbody tr.empty-row{ box-shadow:none; }
+  tbody td{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    padding:9px 14px; border-bottom:1px solid var(--cream-100); text-align:right;
+  }
+  tbody tr:last-child td, tbody td:last-child{ border-bottom:none; }
+  tbody td::before{
+    content:attr(data-label); text-align:left; font-weight:500; color:var(--ink-600);
+    font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; flex:0 0 auto;
+  }
+  tbody td:empty::before{ content:none; }
+  .empty-row td{ display:block; text-align:center; }
+  .empty-row td::before{ content:none; }
+  tbody td:last-child{ justify-content:flex-end; }
+  tbody td:last-child:not(:has(button)){ display:none; }
+}
 </style>
 </head>
 <body>
@@ -346,10 +382,10 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
         ? '<span class="badge badge-yes">Attending</span>'
         : '<span class="badge badge-no">Declined</span>';
       return '<tr>' +
-        '<td>' + escapeHtml(r.Name) + '</td>' +
-        '<td>' + badge + '</td>' +
-        '<td>' + nl2br(r.Message) + '</td>' +
-        '<td class="muted">' + fmtDate(r.Timestamp) + '</td>' +
+        '<td data-label="Name">' + escapeHtml(r.Name) + '</td>' +
+        '<td data-label="Status">' + badge + '</td>' +
+        '<td data-label="Message">' + nl2br(r.Message) + '</td>' +
+        '<td class="muted" data-label="Submitted">' + fmtDate(r.Timestamp) + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-remove" data-action="remove" data-target="rsvp" data-id="' + escapeHtml(r.ID) + '">Remove</button></td>' +
       '</tr>';
     }).join('');
@@ -364,10 +400,10 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     }
     body.innerHTML = sorted.map(function(e){
       return '<tr>' +
-        '<td>' + escapeHtml(e.Name) + '</td>' +
-        '<td>' + escapeHtml(e.Kind) + '</td>' +
-        '<td>' + nl2br(e.Message) + '</td>' +
-        '<td class="muted">' + fmtDate(e.Timestamp) + '</td>' +
+        '<td data-label="Name">' + escapeHtml(e.Name) + '</td>' +
+        '<td data-label="Type">' + escapeHtml(e.Kind) + '</td>' +
+        '<td data-label="Message">' + nl2br(e.Message) + '</td>' +
+        '<td class="muted" data-label="Submitted">' + fmtDate(e.Timestamp) + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-remove" data-action="remove" data-target="guestbook" data-id="' + escapeHtml(e.ID) + '">Remove</button></td>' +
       '</tr>';
     }).join('');
@@ -391,10 +427,10 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     body.innerHTML = all.map(function(e){
       var target = e.type === 'RSVP' ? 'rsvp' : 'guestbook';
       return '<tr>' +
-        '<td>' + escapeHtml(e.type) + '</td>' +
-        '<td>' + escapeHtml(e.name) + '</td>' +
-        '<td>' + nl2br(e.details) + '</td>' +
-        '<td class="muted">' + fmtDate(e.ts) + '</td>' +
+        '<td data-label="Type">' + escapeHtml(e.type) + '</td>' +
+        '<td data-label="Name">' + escapeHtml(e.name) + '</td>' +
+        '<td data-label="Details">' + nl2br(e.details) + '</td>' +
+        '<td class="muted" data-label="Submitted">' + fmtDate(e.ts) + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-restore" data-action="restore" data-target="' + target + '" data-id="' + escapeHtml(e.id) + '">Restore</button></td>' +
       '</tr>';
     }).join('');
