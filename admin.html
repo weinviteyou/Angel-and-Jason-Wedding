@@ -166,17 +166,6 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   </div>
 
   <div class="section-title">
-    <h2>Meal Preferences</h2>
-    <span class="pill-count" id="mealCount">0 selections</span>
-  </div>
-  <div class="table-wrap">
-    <table id="mealTable">
-      <thead><tr><th>Meal</th><th>Count</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="section-title">
     <h2>RSVP Responses</h2>
     <span class="pill-count" id="rsvpCount">0</span>
   </div>
@@ -187,8 +176,7 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     <table id="rsvpTable">
       <thead>
         <tr>
-          <th>Name</th><th>Status</th><th>Guests</th><th>Guest Names</th>
-          <th>Meal</th><th>Dietary / Notes</th><th>Message</th><th>Submitted</th>
+          <th>Name</th><th>Status</th><th>Message</th><th>Submitted</th><th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -201,7 +189,33 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   </div>
   <div class="table-wrap">
     <table id="gbTable">
-      <thead><tr><th>Name</th><th>Type</th><th>Message</th><th>Submitted</th></tr></thead>
+      <thead><tr><th>Name</th><th>Type</th><th>Message</th><th>Submitted</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    <h2>Removed RSVP Responses</h2>
+    <span class="pill-count" id="removedRsvpCount">0</span>
+  </div>
+  <div class="table-wrap">
+    <table id="removedRsvpTable">
+      <thead>
+        <tr>
+          <th>Name</th><th>Status</th><th>Message</th><th>Submitted</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    <h2>Removed Guestbook</h2>
+    <span class="pill-count" id="removedGbCount">0</span>
+  </div>
+  <div class="table-wrap">
+    <table id="removedGbTable">
+      <thead><tr><th>Name</th><th>Type</th><th>Message</th><th>Submitted</th><th>Actions</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -228,7 +242,7 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   var loadingNote = document.getElementById('loadingNote');
   var errorNote = document.getElementById('errorNote');
 
-  var currentData = { rsvps: [], guestbook: [] };
+  var currentData = { rsvps: [], guestbook: [], removedRsvps: [], removedGuestbook: [] };
 
   function escapeHtml(s){
     return String(s || '').replace(/[&<>"']/g, function(c){
@@ -247,6 +261,45 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   function fetchAll(key){
     var url = CONFIG.WEB_APP_URL + '?action=all&key=' + encodeURIComponent(key);
     return fetch(url).then(function(res){ return res.json(); });
+  }
+
+  function updateEntryState(actionType, type, id, label){
+    var key = sessionStorage.getItem('weddingAdminKey');
+    return fetch(CONFIG.WEB_APP_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({type: actionType, record: {type: type, id: id, key: key}})
+    }).then(function(res){ return res.json(); });
+  }
+
+  function removeEntry(type, id, label){
+    if(!id || !window.confirm('Remove this ' + label + ' from the active list? It will move to the Removed table.')) return;
+    updateEntryState('remove', type, id).then(function(data){
+      if(!data || !data.ok) throw new Error((data && data.error) || 'The entry could not be removed.');
+      return fetchAll(sessionStorage.getItem('weddingAdminKey'));
+    }).then(function(data){
+      if(!data || !data.ok) throw new Error((data && data.error) || 'The dashboard could not be refreshed.');
+      currentData = data;
+      renderDashboard();
+    }).catch(function(err){
+      errorNote.textContent = err.message || 'The entry could not be removed.';
+      errorNote.style.display = '';
+    });
+  }
+
+  function restoreEntry(type, id, label){
+    if(!id || !window.confirm('Restore this ' + label + ' to the active list?')) return;
+    updateEntryState('restore', type, id).then(function(data){
+      if(!data || !data.ok) throw new Error((data && data.error) || 'The entry could not be restored.');
+      return fetchAll(sessionStorage.getItem('weddingAdminKey'));
+    }).then(function(data){
+      if(!data || !data.ok) throw new Error((data && data.error) || 'The dashboard could not be refreshed.');
+      currentData = data;
+      renderDashboard();
+    }).catch(function(err){
+      errorNote.textContent = err.message || 'The entry could not be restored.';
+      errorNote.style.display = '';
+    });
   }
 
   function unlock(){
@@ -308,6 +361,8 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
 
     var rsvps = currentData.rsvps || [];
     var gb = currentData.guestbook || [];
+    var removedRsvps = currentData.removedRsvps || [];
+    var removedGb = currentData.removedGuestbook || [];
 
     var attending = rsvps.filter(function(r){ return r.Attending === 'yes'; });
     var declined = rsvps.filter(function(r){ return r.Attending === 'no'; });
@@ -317,19 +372,6 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     document.getElementById('statAttending').textContent = attending.length;
     document.getElementById('statGuests').textContent = totalGuests;
     document.getElementById('statDeclined').textContent = declined.length;
-
-    var meals = {};
-    attending.forEach(function(r){
-      var m = (r.Meal || '').trim();
-      if(!m) return;
-      meals[m] = (meals[m] || 0) + 1;
-    });
-    var mealRows = Object.keys(meals).sort(function(a,b){ return meals[b]-meals[a]; });
-    document.getElementById('mealCount').textContent = mealRows.length + ' selections';
-    var mealBody = document.querySelector('#mealTable tbody');
-    mealBody.innerHTML = mealRows.length
-      ? mealRows.map(function(m){ return '<tr><td>' + escapeHtml(m) + '</td><td>' + meals[m] + '</td></tr>'; }).join('')
-      : '<tr class="empty-row"><td colspan="2">No meal selections yet.</td></tr>';
 
     document.getElementById('rsvpCount').textContent = rsvps.length;
     renderRsvpTable(rsvps);
@@ -344,16 +386,24 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
             '<td>' + escapeHtml(e.Kind) + '</td>' +
             '<td>' + nl2br(e.Message) + '</td>' +
             '<td class="muted">' + fmtDate(e.Timestamp) + '</td>' +
+            '<td><button type="button" class="btn-ghost btn action-btn" data-action="remove" data-type="guestbook" data-id="' + escapeHtml(e.ID) + '">Remove</button></td>' +
           '</tr>';
         }).join('')
-      : '<tr class="empty-row"><td colspan="4">No guestbook entries yet.</td></tr>';
+      : '<tr class="empty-row"><td colspan="5">No guestbook entries yet.</td></tr>';
+    bindActionButtons(gbBody);
+
+    document.getElementById('removedRsvpCount').textContent = removedRsvps.length;
+    renderRemovedRsvpTable(removedRsvps);
+
+    document.getElementById('removedGbCount').textContent = removedGb.length;
+    renderRemovedGuestbookTable(removedGb);
   }
 
   function renderRsvpTable(rsvps){
     var body = document.querySelector('#rsvpTable tbody');
     var sorted = rsvps.slice().sort(function(a,b){ return (b.Timestamp||0) - (a.Timestamp||0); });
     if(!sorted.length){
-      body.innerHTML = '<tr class="empty-row"><td colspan="8">No RSVPs yet.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No RSVPs yet.</td></tr>';
       return;
     }
     body.innerHTML = sorted.map(function(r){
@@ -363,14 +413,69 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
       return '<tr>' +
         '<td>' + escapeHtml(r.Name) + '</td>' +
         '<td>' + badge + '</td>' +
-        '<td>' + escapeHtml(r.Guests) + '</td>' +
-        '<td>' + nl2br(r.GuestNames) + '</td>' +
-        '<td>' + escapeHtml(r.Meal) + '</td>' +
-        '<td>' + nl2br(r.Dietary) + '</td>' +
         '<td>' + nl2br(r.Message) + '</td>' +
         '<td class="muted">' + fmtDate(r.Timestamp) + '</td>' +
+        '<td><button type="button" class="btn-ghost btn action-btn" data-action="remove" data-type="rsvp" data-id="' + escapeHtml(r.ID) + '">Remove</button></td>' +
       '</tr>';
     }).join('');
+    bindActionButtons(body);
+  }
+
+  function renderRemovedRsvpTable(rsvps){
+    var body = document.querySelector('#removedRsvpTable tbody');
+    var sorted = rsvps.slice().sort(function(a,b){ return (b.Timestamp||0) - (a.Timestamp||0); });
+    if(!sorted.length){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No removed RSVPs yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = sorted.map(function(r){
+      var badge = r.Attending === 'yes'
+        ? '<span class="badge badge-yes">Attending</span>'
+        : '<span class="badge badge-no">Declined</span>';
+      return '<tr>' +
+        '<td>' + escapeHtml(r.Name) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td>' + nl2br(r.Message) + '</td>' +
+        '<td class="muted">' + fmtDate(r.Timestamp) + '</td>' +
+        '<td><button type="button" class="btn-ghost btn action-btn" data-action="restore" data-type="rsvp" data-id="' + escapeHtml(r.ID) + '">Restore</button></td>' +
+      '</tr>';
+    }).join('');
+    bindActionButtons(body);
+  }
+
+  function renderRemovedGuestbookTable(entries){
+    var body = document.querySelector('#removedGbTable tbody');
+    var sorted = entries.slice().sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+    if(!sorted.length){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No removed guestbook entries yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = sorted.map(function(e){
+      return '<tr>' +
+        '<td>' + escapeHtml(e.Name) + '</td>' +
+        '<td>' + escapeHtml(e.Kind) + '</td>' +
+        '<td>' + nl2br(e.Message) + '</td>' +
+        '<td class="muted">' + fmtDate(e.Timestamp) + '</td>' +
+        '<td><button type="button" class="btn-ghost btn action-btn" data-action="restore" data-type="guestbook" data-id="' + escapeHtml(e.ID) + '">Restore</button></td>' +
+      '</tr>';
+    }).join('');
+    bindActionButtons(body);
+  }
+
+  function bindActionButtons(container){
+    container.querySelectorAll('.action-btn').forEach(function(button){
+      button.addEventListener('click', function(){
+        var action = button.getAttribute('data-action');
+        var type = button.getAttribute('data-type');
+        var id = button.getAttribute('data-id');
+        var label = type === 'rsvp' ? 'RSVP response' : 'guestbook entry';
+        if(action === 'remove'){
+          removeEntry(type, id, label);
+        } else {
+          restoreEntry(type, id, label);
+        }
+      });
+    });
   }
 
   document.getElementById('rsvpSearch').addEventListener('input', function(){
@@ -408,9 +513,9 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   }
 
   document.getElementById('exportRsvpBtn').addEventListener('click', function(){
-    var headers = ['Name','Attending','Guests','GuestNames','Meal','Dietary','Message','Submitted'];
+    var headers = ['Name','Attending','Message','Submitted'];
     var rows = (currentData.rsvps || []).map(function(r){
-      return [r.Name, r.Attending, r.Guests, r.GuestNames, r.Meal, r.Dietary, r.Message, fmtDate(r.Timestamp)];
+      return [r.Name, r.Attending, r.Message, fmtDate(r.Timestamp)];
     });
     downloadCsv('angel-jason-rsvps.csv', toCsv(headers, rows));
   });

@@ -30,6 +30,8 @@
 
 var SHEET_RSVPS = 'RSVPs';
 var SHEET_GUESTBOOK = 'Guestbook';
+var SHEET_REMOVED_RSVPS = 'Removed RSVPs';
+var SHEET_REMOVED_GUESTBOOK = 'Removed Guestbook';
 
 var RSVP_HEADERS = ['ID', 'Timestamp', 'Name', 'Attending', 'Guests', 'GuestNames', 'Meal', 'Dietary', 'Message'];
 var GB_HEADERS = ['ID', 'Timestamp', 'Name', 'Kind', 'Message'];
@@ -90,6 +92,46 @@ function doPost(e) {
     var type = body.type;
     var r = body.record || {};
 
+    if (type === 'remove') {
+      var adminKey = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+      if (!adminKey || r.key !== adminKey) {
+        return jsonOut_({ ok: false, error: 'unauthorized' });
+      }
+      if (r.type !== 'rsvp' && r.type !== 'guestbook') {
+        return jsonOut_({ ok: false, error: 'unknown type: ' + r.type });
+      }
+      if (!r.id) {
+        return jsonOut_({ ok: false, error: 'missing id' });
+      }
+      var moved = moveRowToSheet_(
+        r.type === 'rsvp' ? SHEET_RSVPS : SHEET_GUESTBOOK,
+        r.type === 'rsvp' ? SHEET_REMOVED_RSVPS : SHEET_REMOVED_GUESTBOOK,
+        r.type === 'rsvp' ? RSVP_HEADERS : GB_HEADERS,
+        r.id
+      );
+      return jsonOut_(moved ? { ok: true } : { ok: false, error: 'entry not found' });
+    }
+
+    if (type === 'restore') {
+      var restoreKey = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+      if (!restoreKey || r.key !== restoreKey) {
+        return jsonOut_({ ok: false, error: 'unauthorized' });
+      }
+      if (r.type !== 'rsvp' && r.type !== 'guestbook') {
+        return jsonOut_({ ok: false, error: 'unknown type: ' + r.type });
+      }
+      if (!r.id) {
+        return jsonOut_({ ok: false, error: 'missing id' });
+      }
+      var restored = moveRowToSheet_(
+        r.type === 'rsvp' ? SHEET_REMOVED_RSVPS : SHEET_REMOVED_GUESTBOOK,
+        r.type === 'rsvp' ? SHEET_RSVPS : SHEET_GUESTBOOK,
+        r.type === 'rsvp' ? RSVP_HEADERS : GB_HEADERS,
+        r.id
+      );
+      return jsonOut_(restored ? { ok: true } : { ok: false, error: 'entry not found' });
+    }
+
     if (type === 'rsvp') {
       var sheet = getSheet_(SHEET_RSVPS, RSVP_HEADERS);
       sheet.appendRow([
@@ -124,6 +166,23 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function moveRowToSheet_(sourceName, destinationName, headers, id) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var source = ss.getSheetByName(sourceName);
+  var destination = getSheet_(destinationName, headers);
+  if (!source || source.getLastRow() < 2) return false;
+  var data = source.getDataRange().getValues();
+  var idColumn = headers.indexOf('ID');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idColumn]) === String(id)) {
+      destination.appendRow(data[i]);
+      source.deleteRow(i + 1);
+      return true;
+    }
+  }
+  return false;
 }
 
 /* ------------------------------------------------------------ *
@@ -161,10 +220,18 @@ function doGet(e) {
     if (!adminKey || params.key !== adminKey) {
       return jsonOut_({ ok: false, error: 'unauthorized' });
     }
+    var guestbook = readSheet_(SHEET_GUESTBOOK, GB_HEADERS).map(function (row) {
+      return { ID: row.ID, Timestamp: row.Timestamp, Name: row.Name, Kind: row.Kind, Message: row.Message, ts: row.Timestamp };
+    });
+    var removedGuestbook = readSheet_(SHEET_REMOVED_GUESTBOOK, GB_HEADERS).map(function (row) {
+      return { ID: row.ID, Timestamp: row.Timestamp, Name: row.Name, Kind: row.Kind, Message: row.Message, ts: row.Timestamp };
+    });
     return jsonOut_({
       ok: true,
       rsvps: readSheet_(SHEET_RSVPS, RSVP_HEADERS),
-      guestbook: readSheet_(SHEET_GUESTBOOK, GB_HEADERS)
+      guestbook: guestbook,
+      removedRsvps: readSheet_(SHEET_REMOVED_RSVPS, RSVP_HEADERS),
+      removedGuestbook: removedGuestbook
     });
   }
 

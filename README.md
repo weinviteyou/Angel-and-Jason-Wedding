@@ -30,7 +30,9 @@ database and API.
   can show live numbers without exposing every guest's full response.
 - **admin.html** is a private page, gated by a password you choose,
   that asks Code.gs for the full RSVP and guestbook data and displays
-  it as a dashboard with search and CSV export.
+  it as a dashboard with search, CSV export, authenticated controls for
+  removing individual RSVP or guestbook entries, and a Removed table
+  with restore actions.
 
 Nobody needs to touch the Google Sheet directly — Code.gs manages the
 column headers and sheet creation automatically the first time someone
