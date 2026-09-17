@@ -114,6 +114,11 @@ tbody tr:hover{ background:var(--ivory-100); }
 .badge-no{ background:rgba(162,58,58,.12); color:var(--no-600); }
 .muted{ color:var(--ink-400); }
 .empty-row td{ text-align:center; padding:28px; color:var(--ink-400); font-style:italic; }
+.btn-sm{ padding:5px 12px; font-size:.72rem; width:auto; border-radius:7px; }
+.btn-remove{ border-color:var(--no-600); color:var(--no-600); background:transparent; }
+.btn-remove:hover{ background:rgba(162,58,58,.1); }
+.btn-restore{ border-color:var(--ok-600); color:var(--ok-600); background:transparent; }
+.btn-restore:hover{ background:rgba(63,122,78,.1); }
 
 #loadingNote, #errorNote{ font-size:.85rem; margin:10px 0; }
 #errorNote{ color:var(--no-600); display:none; }
@@ -187,8 +192,7 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     <table id="rsvpTable">
       <thead>
         <tr>
-          <th>Name</th><th>Status</th><th>Guests</th><th>Guest Names</th>
-          <th>Meal</th><th>Dietary / Notes</th><th>Message</th><th>Submitted</th>
+          <th>Name</th><th>Status</th><th>Message</th><th>Submitted</th><th></th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -201,7 +205,18 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   </div>
   <div class="table-wrap">
     <table id="gbTable">
-      <thead><tr><th>Name</th><th>Type</th><th>Message</th><th>Submitted</th></tr></thead>
+      <thead><tr><th>Name</th><th>Type</th><th>Message</th><th>Submitted</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    <h2>Removed</h2>
+    <span class="pill-count" id="removedCount">0</span>
+  </div>
+  <div class="table-wrap">
+    <table id="removedTable">
+      <thead><tr><th>Type</th><th>Name</th><th>Details</th><th>Submitted</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -228,7 +243,8 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   var loadingNote = document.getElementById('loadingNote');
   var errorNote = document.getElementById('errorNote');
 
-  var currentData = { rsvps: [], guestbook: [] };
+  var currentData = { rsvps: [], guestbook: [], removedRsvps: [], removedGuestbook: [] };
+  var adminKeyCache = '';
 
   function escapeHtml(s){
     return String(s || '').replace(/[&<>"']/g, function(c){
@@ -264,6 +280,7 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
       unlockBtn.disabled = false;
       if(data && data.ok){
         sessionStorage.setItem('weddingAdminKey', key);
+        adminKeyCache = key;
         gateMsg.textContent = '';
         gate.style.display = 'none';
         dashboard.classList.add('show');
@@ -292,6 +309,7 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   document.getElementById('refreshBtn').addEventListener('click', function(){
     var key = sessionStorage.getItem('weddingAdminKey');
     if(!key) return;
+    adminKeyCache = key;
     loadingNote.style.display = '';
     fetchAll(key).then(function(data){
       loadingNote.style.display = 'none';
@@ -335,25 +353,16 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     renderRsvpTable(rsvps);
 
     document.getElementById('gbCount').textContent = gb.length;
-    var gbBody = document.querySelector('#gbTable tbody');
-    var gbSorted = gb.slice().sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
-    gbBody.innerHTML = gbSorted.length
-      ? gbSorted.map(function(e){
-          return '<tr>' +
-            '<td>' + escapeHtml(e.Name) + '</td>' +
-            '<td>' + escapeHtml(e.Kind) + '</td>' +
-            '<td>' + nl2br(e.Message) + '</td>' +
-            '<td class="muted">' + fmtDate(e.Timestamp) + '</td>' +
-          '</tr>';
-        }).join('')
-      : '<tr class="empty-row"><td colspan="4">No guestbook entries yet.</td></tr>';
+    renderGbTable(gb);
+
+    renderRemovedTable();
   }
 
   function renderRsvpTable(rsvps){
     var body = document.querySelector('#rsvpTable tbody');
     var sorted = rsvps.slice().sort(function(a,b){ return (b.Timestamp||0) - (a.Timestamp||0); });
     if(!sorted.length){
-      body.innerHTML = '<tr class="empty-row"><td colspan="8">No RSVPs yet.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No RSVPs yet.</td></tr>';
       return;
     }
     body.innerHTML = sorted.map(function(r){
@@ -363,21 +372,91 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
       return '<tr>' +
         '<td>' + escapeHtml(r.Name) + '</td>' +
         '<td>' + badge + '</td>' +
-        '<td>' + escapeHtml(r.Guests) + '</td>' +
-        '<td>' + nl2br(r.GuestNames) + '</td>' +
-        '<td>' + escapeHtml(r.Meal) + '</td>' +
-        '<td>' + nl2br(r.Dietary) + '</td>' +
         '<td>' + nl2br(r.Message) + '</td>' +
         '<td class="muted">' + fmtDate(r.Timestamp) + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-remove" data-action="remove" data-target="rsvp" data-id="' + escapeHtml(r.ID) + '">Remove</button></td>' +
       '</tr>';
     }).join('');
   }
+
+  function renderGbTable(gb){
+    var body = document.querySelector('#gbTable tbody');
+    var sorted = gb.slice().sort(function(a,b){ return (b.Timestamp||0) - (a.Timestamp||0); });
+    if(!sorted.length){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No guestbook entries yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = sorted.map(function(e){
+      return '<tr>' +
+        '<td>' + escapeHtml(e.Name) + '</td>' +
+        '<td>' + escapeHtml(e.Kind) + '</td>' +
+        '<td>' + nl2br(e.Message) + '</td>' +
+        '<td class="muted">' + fmtDate(e.Timestamp) + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-remove" data-action="remove" data-target="guestbook" data-id="' + escapeHtml(e.ID) + '">Remove</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderRemovedTable(){
+    var removedRsvps = (currentData.removedRsvps || []).map(function(r){
+      return { type:'RSVP', name:r.Name, details:r.Message, ts:r.Timestamp, id:r.ID };
+    });
+    var removedGb = (currentData.removedGuestbook || []).map(function(e){
+      return { type:'Guestbook', name:e.Name, details:e.Message, ts:e.Timestamp, id:e.ID };
+    });
+    var all = removedRsvps.concat(removedGb).sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+
+    document.getElementById('removedCount').textContent = all.length;
+    var body = document.querySelector('#removedTable tbody');
+    if(!all.length){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No removed entries.</td></tr>';
+      return;
+    }
+    body.innerHTML = all.map(function(e){
+      var target = e.type === 'RSVP' ? 'rsvp' : 'guestbook';
+      return '<tr>' +
+        '<td>' + escapeHtml(e.type) + '</td>' +
+        '<td>' + escapeHtml(e.name) + '</td>' +
+        '<td>' + nl2br(e.details) + '</td>' +
+        '<td class="muted">' + fmtDate(e.ts) + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-restore" data-action="restore" data-target="' + target + '" data-id="' + escapeHtml(e.id) + '">Restore</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function postAction(action, target, id){
+    var key = adminKeyCache || sessionStorage.getItem('weddingAdminKey');
+    if(!key) return;
+    return fetch(CONFIG.WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify({ type: action, target: target, id: id, key: key })
+    }).then(function(res){ return res.json(); }).then(function(data){
+      if(data && data.ok){
+        return fetchAll(key).then(function(d){
+          if(d && d.ok){ currentData = d; renderDashboard(); }
+        });
+      } else {
+        alert('Action failed: ' + (data && data.error ? data.error : 'unknown error'));
+      }
+    });
+  }
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('button[data-action]');
+    if(!btn) return;
+    var action = btn.getAttribute('data-action');
+    var target = btn.getAttribute('data-target');
+    var id = btn.getAttribute('data-id');
+    if(action === 'remove' && !confirm('Remove this ' + target + ' entry? It can be restored later from the Removed table.')) return;
+    btn.disabled = true;
+    postAction(action, target, id).finally(function(){ btn.disabled = false; });
+  });
 
   document.getElementById('rsvpSearch').addEventListener('input', function(){
     var q = this.value.trim().toLowerCase();
     var rsvps = (currentData.rsvps || []).filter(function(r){
       if(!q) return true;
-      return [r.Name, r.Meal, r.Message, r.Dietary, r.GuestNames].some(function(f){
+      return [r.Name, r.Message].some(function(f){
         return String(f || '').toLowerCase().indexOf(q) !== -1;
       });
     });
@@ -429,6 +508,7 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   var savedKey = sessionStorage.getItem('weddingAdminKey');
   if(savedKey){
     adminKeyInput.value = savedKey;
+    adminKeyCache = savedKey;
     unlock();
   }
 

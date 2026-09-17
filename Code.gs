@@ -30,6 +30,8 @@
 
 var SHEET_RSVPS = 'RSVPs';
 var SHEET_GUESTBOOK = 'Guestbook';
+var SHEET_RSVPS_REMOVED = 'RSVPs_Removed';
+var SHEET_GUESTBOOK_REMOVED = 'Guestbook_Removed';
 
 var RSVP_HEADERS = ['ID', 'Timestamp', 'Name', 'Attending', 'Guests', 'GuestNames', 'Meal', 'Dietary', 'Message'];
 var GB_HEADERS = ['ID', 'Timestamp', 'Name', 'Kind', 'Message'];
@@ -75,6 +77,37 @@ function clean_(v) {
   return (v === undefined || v === null) ? '' : String(v);
 }
 
+function checkAdmin_(params) {
+  var props = PropertiesService.getScriptProperties();
+  var adminKey = props.getProperty('ADMIN_KEY');
+  return !!adminKey && params.key === adminKey;
+}
+
+/**
+ * Moves the row whose ID column matches id from the sheet named
+ * fromName to the sheet named toName (creating toName if needed).
+ * Returns true if a row was moved.
+ */
+function moveRowById_(fromName, toName, headers, id) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var fromSheet = ss.getSheetByName(fromName);
+  if (!fromSheet) return false;
+  var lastRow = fromSheet.getLastRow();
+  if (lastRow < 2) return false;
+  var range = fromSheet.getRange(2, 1, lastRow - 1, headers.length);
+  var values = range.getValues();
+  var idCol = headers.indexOf('ID');
+  for (var i = 0; i < values.length; i++) {
+    if (String(values[i][idCol]) === String(id)) {
+      var toSheet = getSheet_(toName, headers);
+      toSheet.appendRow(values[i]);
+      fromSheet.deleteRow(i + 2);
+      return true;
+    }
+  }
+  return false;
+}
+
 /* ------------------------------------------------------------ *
  *  doPost — new RSVP or guestbook entry
  * ------------------------------------------------------------ */
@@ -118,6 +151,27 @@ function doPost(e) {
       return jsonOut_({ ok: true });
     }
 
+    if (type === 'remove' || type === 'restore') {
+      if (!checkAdmin_(body)) {
+        return jsonOut_({ ok: false, error: 'unauthorized' });
+      }
+      var target = body.target; // 'rsvp' | 'guestbook'
+      var id = body.id;
+      var moved;
+      if (target === 'rsvp') {
+        moved = (type === 'remove')
+          ? moveRowById_(SHEET_RSVPS, SHEET_RSVPS_REMOVED, RSVP_HEADERS, id)
+          : moveRowById_(SHEET_RSVPS_REMOVED, SHEET_RSVPS, RSVP_HEADERS, id);
+      } else if (target === 'guestbook') {
+        moved = (type === 'remove')
+          ? moveRowById_(SHEET_GUESTBOOK, SHEET_GUESTBOOK_REMOVED, GB_HEADERS, id)
+          : moveRowById_(SHEET_GUESTBOOK_REMOVED, SHEET_GUESTBOOK, GB_HEADERS, id);
+      } else {
+        return jsonOut_({ ok: false, error: 'unknown target: ' + target });
+      }
+      return jsonOut_({ ok: moved, error: moved ? undefined : 'row not found' });
+    }
+
     return jsonOut_({ ok: false, error: 'unknown type: ' + type });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err) });
@@ -156,15 +210,15 @@ function doGet(e) {
   }
 
   if (action === 'all') {
-    var props = PropertiesService.getScriptProperties();
-    var adminKey = props.getProperty('ADMIN_KEY');
-    if (!adminKey || params.key !== adminKey) {
+    if (!checkAdmin_(params)) {
       return jsonOut_({ ok: false, error: 'unauthorized' });
     }
     return jsonOut_({
       ok: true,
       rsvps: readSheet_(SHEET_RSVPS, RSVP_HEADERS),
-      guestbook: readSheet_(SHEET_GUESTBOOK, GB_HEADERS)
+      guestbook: readSheet_(SHEET_GUESTBOOK, GB_HEADERS),
+      removedRsvps: readSheet_(SHEET_RSVPS_REMOVED, RSVP_HEADERS),
+      removedGuestbook: readSheet_(SHEET_GUESTBOOK_REMOVED, GB_HEADERS)
     });
   }
 
