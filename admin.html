@@ -171,22 +171,11 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
   </div>
 
   <div class="section-title">
-    <h2>Meal Preferences</h2>
-    <span class="pill-count" id="mealCount">0 selections</span>
-  </div>
-  <div class="table-wrap">
-    <table id="mealTable">
-      <thead><tr><th>Meal</th><th>Count</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="section-title">
     <h2>RSVP Responses</h2>
     <span class="pill-count" id="rsvpCount">0</span>
   </div>
   <div class="search-row">
-    <input type="text" id="rsvpSearch" placeholder="Search by name, meal, or message&hellip;" />
+    <input type="text" id="rsvpSearch" placeholder="Search by name or message&hellip;" />
   </div>
   <div class="table-wrap">
     <table id="rsvpTable">
@@ -335,19 +324,6 @@ footer.admin-footer{ text-align:center; color:var(--ink-400); font-size:.78rem; 
     document.getElementById('statAttending').textContent = attending.length;
     document.getElementById('statGuests').textContent = totalGuests;
     document.getElementById('statDeclined').textContent = declined.length;
-
-    var meals = {};
-    attending.forEach(function(r){
-      var m = (r.Meal || '').trim();
-      if(!m) return;
-      meals[m] = (meals[m] || 0) + 1;
-    });
-    var mealRows = Object.keys(meals).sort(function(a,b){ return meals[b]-meals[a]; });
-    document.getElementById('mealCount').textContent = mealRows.length + ' selections';
-    var mealBody = document.querySelector('#mealTable tbody');
-    mealBody.innerHTML = mealRows.length
-      ? mealRows.map(function(m){ return '<tr><td>' + escapeHtml(m) + '</td><td>' + meals[m] + '</td></tr>'; }).join('')
-      : '<tr class="empty-row"><td colspan="2">No meal selections yet.</td></tr>';
 
     document.getElementById('rsvpCount').textContent = rsvps.length;
     renderRsvpTable(rsvps);
