@@ -1383,7 +1383,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
       entries.forEach(function(en){
         if(en.isIntersecting){ en.target.classList.add('in-view'); revealObs.unobserve(en.target); }
       });
-    }, {threshold:0.15, rootMargin:'0px 0px -60px 0px'});
+    /* threshold 0: a ratio threshold can never be reached by blocks taller
+       than the viewport (e.g. the guestbook wall on phones), leaving them
+       invisible; the rootMargin alone delays the reveal until in view. */
+    }, {threshold:0, rootMargin:'0px 0px -60px 0px'});
     revealEls.forEach(function(el){ revealObs.observe(el); });
   } else {
     revealEls.forEach(function(el){ el.classList.add('in-view'); });
