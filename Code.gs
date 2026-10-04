@@ -1,5 +1,5 @@
 /**
- * Angel & Jason Wedding — RSVP + Guestbook backend
+ * Jason & Angel Wedding — RSVP + Guestbook backend
  * ---------------------------------------------------------------
  * This script turns a Google Sheet into a free JSON API for the
  * wedding site hosted on GitHub Pages. It handles:

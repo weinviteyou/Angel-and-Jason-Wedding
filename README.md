@@ -1,4 +1,4 @@
-# Angel & Jason — Wedding RSVP Site
+# Jason & Angel — Wedding RSVP Site
 
 A static wedding invitation site built for GitHub Pages, with RSVPs and
 guestbook notes saved to a Google Sheet through a small Google Apps
@@ -43,7 +43,7 @@ submits.
 ## Part 1 — Create the Google Sheet backend
 
 1. Go to [sheets.google.com](https://sheets.google.com) and create a
-   new blank spreadsheet. Name it something like **Angel & Jason RSVPs**.
+   new blank spreadsheet. Name it something like **Jason & Angel RSVPs**.
 
 2. In the sheet, open **Extensions → Apps Script**. A new tab opens
    with a script editor pre-loaded with an empty `Code.gs`.
